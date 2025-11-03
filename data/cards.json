@@ -1,0 +1,12 @@
+{
+  "1Meow": {
+    "image": "https://i.imgur.com/xM89l6U.png",
+    "value": 7,
+    "rarity": "common"
+  },
+  "2Meow": {
+    "image": "https://i.imgur.com/kZLPR9N.png",
+    "value": 10,
+    "rarity": "rare"
+  }
+}

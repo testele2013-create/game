@@ -1,8 +1,15 @@
 {
   "336930168453201920": {
-    "money": 0,
-    "inventory": {},
-    "income": [],
+    "money": 27490,
+    "inventory": {
+      "2Meow": {
+        "baseName": "2Meow",
+        "rarity": "rare"
+      }
+    },
+    "income": [
+      "2Meow"
+    ],
     "attack": [],
     "defend": [],
     "locked": [],
