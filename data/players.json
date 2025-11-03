@@ -1,1 +1,14 @@
-{}
+{
+  "336930168453201920": {
+    "money": 0,
+    "inventory": {},
+    "income": [],
+    "attack": [],
+    "defend": [],
+    "locked": [],
+    "damageLevel": 1,
+    "activeShield": null,
+    "stoneProgress": 0,
+    "activeMining": null
+  }
+}
