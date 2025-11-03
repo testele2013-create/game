@@ -58,6 +58,7 @@ client.once('ready', async () => {
     await registerCommands();
     
     startPassiveIncome();
+    startMathChallengeSystem();
 });
 
 async function registerCommands() {
@@ -246,7 +247,16 @@ async function registerCommands() {
 
         new SlashCommandBuilder()
             .setName('inventory')
-            .setDescription('View your card inventory')
+            .setDescription('View your card inventory'),
+
+        new SlashCommandBuilder()
+            .setName('removecard')
+            .setDescription('[Admin] Remove a card from the entire game')
+            .addStringOption(option => option.setName('cardname').setDescription('Card name to remove').setRequired(true)),
+
+        new SlashCommandBuilder()
+            .setName('mycollection')
+            .setDescription('View your collection sorted by card value')
     ].map(command => command.toJSON());
 
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
@@ -289,6 +299,47 @@ function startPassiveIncome() {
         dataManager.saveData('players.json', players);
     }, 1000);
 }
+
+let mathChallenge = null;
+
+function startMathChallengeSystem() {
+    setInterval(() => {
+        const num1 = Math.floor(Math.random() * 100) + 1;
+        const num2 = Math.floor(Math.random() * 100) + 1;
+        const operation = Math.random() < 0.5 ? '+' : '-';
+        const answer = operation === '+' ? num1 + num2 : num1 - num2;
+        
+        mathChallenge = {
+            question: `${num1} ${operation} ${num2}`,
+            answer: answer,
+            timestamp: Date.now()
+        };
+        
+        console.log(`Math challenge created: ${mathChallenge.question} = ${mathChallenge.answer}`);
+        
+        client.guilds.cache.forEach(guild => {
+            const channel = guild.channels.cache.find(ch => ch.name === 'general' || ch.isTextBased());
+            if (channel && channel.isTextBased()) {
+                channel.send(`🧮 **Math Challenge!** Solve this problem and win 1,000,000 coins!\n\n**${mathChallenge.question} = ?**\n\nFirst correct answer wins!`);
+            }
+        });
+    }, 300000);
+}
+
+client.on('messageCreate', async message => {
+    if (message.author.bot || !mathChallenge) return;
+    
+    const userAnswer = parseInt(message.content.trim());
+    
+    if (!isNaN(userAnswer) && userAnswer === mathChallenge.answer) {
+        const playerData = dataManager.getPlayerData(message.author.id);
+        playerData.money += 1000000;
+        dataManager.updatePlayerData(message.author.id, playerData);
+        
+        await message.reply(`🎉 Correct! **${mathChallenge.question} = ${mathChallenge.answer}**\n\nYou won 1,000,000 coins! 💰`);
+        mathChallenge = null;
+    }
+});
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;

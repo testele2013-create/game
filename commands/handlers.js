@@ -7,7 +7,7 @@ const activeMining = new Map();
 async function handleCommand(interaction, isAdmin) {
     const commandName = interaction.commandName;
 
-    const adminCommands = ['addcard', 'hitstoneadd', 'create', 'eventcards', 'start', 'stop', 'give', 'shieldcode', 'shop', 'removecardshop'];
+    const adminCommands = ['addcard', 'hitstoneadd', 'create', 'eventcards', 'start', 'stop', 'give', 'shieldcode', 'shop', 'removecardshop', 'removecard'];
     
     if (adminCommands.includes(commandName) && !isAdmin) {
         return await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
@@ -34,6 +34,8 @@ async function handleCommand(interaction, isAdmin) {
             return await handleShop(interaction);
         case 'removecardshop':
             return await handleRemoveCardShop(interaction);
+        case 'removecard':
+            return await handleRemoveCard(interaction);
         case 'hitstone':
             return await handleHitStone(interaction);
         case 'hitstonevent':
@@ -80,6 +82,8 @@ async function handleCommand(interaction, isAdmin) {
             return await handleBalance(interaction);
         case 'inventory':
             return await handleInventory(interaction);
+        case 'mycollection':
+            return await handleMyCollection(interaction);
         default:
             return await interaction.reply({ content: 'Unknown command.', ephemeral: true });
     }
@@ -272,6 +276,63 @@ async function handleRemoveCardShop(interaction) {
     dataManager.saveShop(shop);
 
     return await interaction.reply({ content: `Removed "${cardName}" from shop.`, ephemeral: true });
+}
+
+async function handleRemoveCard(interaction) {
+    const cardName = interaction.options.getString('cardname');
+    const cards = dataManager.getCards();
+
+    if (!cards[cardName]) {
+        return await interaction.reply({ content: `Card "${cardName}" does not exist!`, ephemeral: true });
+    }
+
+    delete cards[cardName];
+    dataManager.saveCards(cards);
+
+    const players = dataManager.loadData('players.json');
+    let removedCount = 0;
+    
+    for (const [userId, playerData] of Object.entries(players)) {
+        const cardsToRemove = Object.keys(playerData.inventory).filter(card => 
+            playerData.inventory[card].baseName === cardName
+        );
+        
+        cardsToRemove.forEach(card => {
+            delete playerData.inventory[card];
+            playerData.income = playerData.income.filter(c => c !== card);
+            playerData.attack = playerData.attack.filter(c => c !== card);
+            playerData.defend = playerData.defend.filter(c => c !== card);
+            playerData.locked = playerData.locked.filter(c => c !== card);
+            removedCount++;
+        });
+    }
+    
+    dataManager.saveData('players.json', players);
+
+    const shop = dataManager.getShop();
+    if (shop[cardName]) {
+        delete shop[cardName];
+        dataManager.saveShop(shop);
+    }
+
+    const stones = dataManager.getStones();
+    if (stones.default && stones.default.cards) {
+        stones.default.cards = stones.default.cards.filter(c => c !== cardName);
+        dataManager.saveStones(stones);
+    }
+
+    const events = dataManager.getEvents();
+    for (const [eventName, eventData] of Object.entries(events)) {
+        if (eventData.cards) {
+            eventData.cards = eventData.cards.filter(c => c !== cardName);
+        }
+    }
+    dataManager.saveEvents(events);
+
+    return await interaction.reply({ 
+        content: `Removed "${cardName}" from the game! Deleted ${removedCount} card instances from player inventories.`, 
+        ephemeral: true 
+    });
 }
 
 async function handleHitStone(interaction) {
@@ -800,17 +861,31 @@ async function handleUpgrade(interaction) {
     const userId = interaction.user.id;
     const playerData = dataManager.getPlayerData(userId);
     
-    const cost = Math.floor(Math.random() * 9000000) + 1000000;
+    if (!playerData.upgradeCount) {
+        playerData.upgradeCount = 0;
+    }
+    
+    const baseCost = 10000000 + (playerData.upgradeCount * 10000000);
+    const randomAddition = Math.floor(Math.random() * 90000000);
+    const cost = baseCost + randomAddition;
 
     if (playerData.money < cost) {
         return await interaction.reply({ content: `Not enough money! Upgrade costs ${cost.toLocaleString()}.`, ephemeral: true });
     }
 
     playerData.money -= cost;
+    
+    const failChance = Math.random();
+    if (failChance < 0.3) {
+        dataManager.updatePlayerData(userId, playerData);
+        return await interaction.reply({ content: `❌ Upgrade failed! You lost ${cost.toLocaleString()} coins but your damage remains at ${playerData.damageLevel}.` });
+    }
+    
     playerData.damageLevel += 1;
+    playerData.upgradeCount += 1;
     dataManager.updatePlayerData(userId, playerData);
 
-    return await interaction.reply({ content: `Upgraded! Your damage is now ${playerData.damageLevel}. Cost: ${cost.toLocaleString()}` });
+    return await interaction.reply({ content: `✅ Upgrade successful! Your damage is now ${playerData.damageLevel}. Cost: ${cost.toLocaleString()}\n\nNext upgrade will cost between ${(baseCost + 10000000).toLocaleString()} and ${(baseCost + 10000000 + 90000000).toLocaleString()}.` });
 }
 
 async function handleContract(interaction) {
@@ -1035,6 +1110,45 @@ async function handleInventory(interaction) {
     for (const [rarity, cardNames] of Object.entries(cardsByRarity)) {
         embed.addFields({ name: `${rarity} (${cardNames.length})`, value: cardNames.join(', ').substring(0, 1024), inline: false });
     }
+
+    return await interaction.reply({ embeds: [embed] });
+}
+
+async function handleMyCollection(interaction) {
+    const userId = interaction.user.id;
+    const playerData = dataManager.getPlayerData(userId);
+    const cards = dataManager.getCards();
+
+    if (Object.keys(playerData.inventory).length === 0) {
+        return await interaction.reply({ content: 'Your collection is empty!', ephemeral: true });
+    }
+
+    const cardList = Object.entries(playerData.inventory).map(([cardName, cardData]) => {
+        const baseCard = cards[cardData.baseName];
+        return {
+            name: cardName,
+            baseName: cardData.baseName,
+            value: baseCard ? baseCard.value : 0,
+            rarity: cardData.rarity
+        };
+    });
+
+    cardList.sort((a, b) => b.value - a.value);
+
+    const embed = new EmbedBuilder()
+        .setTitle('💎 Your Collection (Sorted by Value)')
+        .setColor('#FFD700');
+
+    let description = '';
+    cardList.forEach((card, index) => {
+        description += `${index + 1}. **${card.name}** (${card.rarity}) - Value: ${card.value}\n`;
+    });
+
+    if (description.length > 4096) {
+        description = description.substring(0, 4090) + '...';
+    }
+
+    embed.setDescription(description);
 
     return await interaction.reply({ embeds: [embed] });
 }
