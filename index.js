@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const dataManager = require('./utils/dataManager');
+const http = require('http');
 
 const client = new Client({
     intents: [
@@ -9,6 +10,47 @@ const client = new Client({
 
 const ADMIN_ROLE = 'Admin';
 const STONE_HP = 170;
+
+// Simple HTTP server for Replit health check
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Discord Card Game Bot</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+                h1 { color: #5865F2; }
+                .status { padding: 10px; background: #43B581; color: white; border-radius: 5px; display: inline-block; }
+                .info { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                code { background: #e0e0e0; padding: 2px 6px; border-radius: 3px; }
+            </style>
+        </head>
+        <body>
+            <h1>🎮 Discord Card Game Bot</h1>
+            <div class="status">✅ Bot is running</div>
+            <div class="info">
+                <h2>Features</h2>
+                <ul>
+                    <li><strong>Automated Mining:</strong> <code>/hitstone</code> now deals damage per second automatically</li>
+                    <li><strong>Real-time Progress:</strong> Live HP tracking with progress bars</li>
+                    <li><strong>Card Collection:</strong> Collect cards across 6 rarity tiers</li>
+                    <li><strong>PvP Combat:</strong> Battle other players</li>
+                    <li><strong>Trading System:</strong> Trade cards and currency</li>
+                    <li><strong>Passive Income:</strong> Set cards for automatic money generation</li>
+                </ul>
+                <h2>Getting Started</h2>
+                <p>Use <code>/hitstone</code> in Discord to start mining! The bot will automatically mine the stone and show you real-time progress.</p>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
+server.listen(5000, '0.0.0.0', () => {
+    console.log('Health check server running on port 5000');
+});
 
 client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
