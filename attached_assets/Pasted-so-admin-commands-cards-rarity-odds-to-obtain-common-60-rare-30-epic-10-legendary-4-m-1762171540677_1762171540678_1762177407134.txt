@@ -1,0 +1,43 @@
+so 
+admin commands
+
+cards rarity odds to obtain: common:60% , rare:30%, epic:10%, legendary:4%, mythic:2%, unique:0.2%
+/addcard card name, imgur link for image, value for offline earning per second also for attack and defend power, rarity, this creates cards
+/hitstoneadd card name, this adds cards to the default stone
+/create event name,stone health points, card name and amount as a requirement to be allowed to use /hitstoneevent if
+player doesnt have the specified card/s he cant use the command
+/eventcards eventname, card name to add cards to event
+/start event name enables player to use /hitstonevent where they get cards from event
+/stop event name disable the /hitstoneevent
+/give to give players cards or money
+/shieldcode code, duration, to make shields 
+/shop card name price, this adding cards to /shop so player can buy cards with money
+/removecardshop card name, to remove card from shop
+
+player commands
+
+/hitstone to break stone for getting cards, this has 170 health points, 1 card per stone broke
+
+/trade to trade money or cards
+/setincome to choose a card for passive income base on card value up to 10 cards
+/setattack to choose a card for attack lineup up to 10
+/setdefend to choose a card for defense lineup up to 10
+one card can be set only in one of the three sets at a time 
+/resetsetincome
+/resetsetattack to remove all cards from attack lineup
+/resetsetdefend to remove all cards from defend lineup
+/attack player to attack someone when a player use /attack if he wins he pick one number from 1 to 10 and 3 random generated numbers will mean 10%,25%,50% of all defender money and if attacker picks 1 of those 3 numbers he gets that amount of money from defender
+/useshield code to protect against attacks
+/upgrade to improve damage done to stone each new level increase damage by 1 and costs a random amount of money between 10000/100000
+basic damage per second is 1
+each new card has added a number to it after the original/first one , so you get "card" next one is "card1" then "card2" and so on
+
+/contract choose a rarity, then takes away 100 cards of that rarity to exchange for a random card of a 1 higher rarity level for example 100 commons for one rare, 100 rares for 1 epic
+/lock card name , this cards wont be used in /contract
+/unlock card name to unlock it
+/shoplist to check the cards available to shop
+/shopbuy card name to buy a card
+/viewcard to look at card image
+/viewattackset to display the lineup in 2 lines with 5 cards per line
+/viewdefendset to display the lineup in 2 lines with 5 cards per line
+/viewlock showing all cards you /lock

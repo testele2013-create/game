@@ -1,0 +1,22 @@
+{
+  "336930168453201920": {
+    "money": 0,
+    "inventory": {
+      "Meow2": {
+        "baseName": "Meow2",
+        "rarity": "rare"
+      },
+      "Meow1": {
+        "baseName": "Meow1",
+        "rarity": "common"
+      }
+    },
+    "income": [],
+    "attack": [],
+    "defend": [],
+    "locked": [],
+    "damageLevel": 1,
+    "activeShield": null,
+    "stoneProgress": 0
+  }
+}
