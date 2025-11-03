@@ -1,0 +1,16 @@
+{
+  "name": "discord-card-game-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for card collection and battling game",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["discord", "bot", "game", "cards"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "axios": "^1.6.5"
+  }
+}
