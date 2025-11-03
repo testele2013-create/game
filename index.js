@@ -1,10 +1,11 @@
-const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const dataManager = require('./utils/dataManager');
 const http = require('http');
 
 const client = new Client({
     intents: [
-        GatewayIntentBits.Guilds
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages
     ]
 });
 
@@ -303,45 +304,77 @@ function startPassiveIncome() {
 let mathChallenge = null;
 
 function startMathChallengeSystem() {
-    setInterval(() => {
+    setInterval(async () => {
         const num1 = Math.floor(Math.random() * 100) + 1;
         const num2 = Math.floor(Math.random() * 100) + 1;
         const operation = Math.random() < 0.5 ? '+' : '-';
-        const answer = operation === '+' ? num1 + num2 : num1 - num2;
+        const correctAnswer = operation === '+' ? num1 + num2 : num1 - num2;
+        
+        const wrongAnswer1 = correctAnswer + Math.floor(Math.random() * 10) + 1;
+        const wrongAnswer2 = correctAnswer - Math.floor(Math.random() * 10) - 1;
+        
+        const answers = [correctAnswer, wrongAnswer1, wrongAnswer2].sort(() => Math.random() - 0.5);
         
         mathChallenge = {
             question: `${num1} ${operation} ${num2}`,
-            answer: answer,
+            answer: correctAnswer,
             timestamp: Date.now()
         };
         
         console.log(`Math challenge created: ${mathChallenge.question} = ${mathChallenge.answer}`);
         
-        client.guilds.cache.forEach(guild => {
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`math_${answers[0]}`)
+                    .setLabel(`${answers[0]}`)
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(`math_${answers[1]}`)
+                    .setLabel(`${answers[1]}`)
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId(`math_${answers[2]}`)
+                    .setLabel(`${answers[2]}`)
+                    .setStyle(ButtonStyle.Primary)
+            );
+        
+        client.guilds.cache.forEach(async guild => {
             const channel = guild.channels.cache.find(ch => ch.name === 'general' || ch.isTextBased());
             if (channel && channel.isTextBased()) {
-                channel.send(`🧮 **Math Challenge!** Solve this problem and win 1,000,000 coins!\n\n**${mathChallenge.question} = ?**\n\nFirst correct answer wins!`);
+                await channel.send({
+                    content: `🧮 **Math Challenge!** Solve this problem and win 1,000,000 coins!\n\n**${mathChallenge.question} = ?**\n\nClick the correct answer below!`,
+                    components: [row]
+                });
             }
         });
     }, 300000);
 }
 
-client.on('messageCreate', async message => {
-    if (message.author.bot || !mathChallenge) return;
-    
-    const userAnswer = parseInt(message.content.trim());
-    
-    if (!isNaN(userAnswer) && userAnswer === mathChallenge.answer) {
-        const playerData = dataManager.getPlayerData(message.author.id);
-        playerData.money += 1000000;
-        dataManager.updatePlayerData(message.author.id, playerData);
-        
-        await message.reply(`🎉 Correct! **${mathChallenge.question} = ${mathChallenge.answer}**\n\nYou won 1,000,000 coins! 💰`);
-        mathChallenge = null;
-    }
-});
-
 client.on('interactionCreate', async interaction => {
+    if (interaction.isButton() && interaction.customId.startsWith('math_')) {
+        if (!mathChallenge) {
+            return await interaction.reply({ content: 'This challenge has already been solved!', ephemeral: true });
+        }
+        
+        const userAnswer = parseInt(interaction.customId.replace('math_', ''));
+        
+        if (userAnswer === mathChallenge.answer) {
+            const playerData = dataManager.getPlayerData(interaction.user.id);
+            playerData.money += 1000000;
+            dataManager.updatePlayerData(interaction.user.id, playerData);
+            
+            await interaction.update({ 
+                content: `🎉 ${interaction.user.username} answered correctly! **${mathChallenge.question} = ${mathChallenge.answer}**\n\nThey won 1,000,000 coins! 💰`,
+                components: []
+            });
+            mathChallenge = null;
+        } else {
+            await interaction.reply({ content: `❌ Wrong answer! Try again!`, ephemeral: true });
+        }
+        return;
+    }
+    
     if (!interaction.isChatInputCommand()) return;
 
     try {
