@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "server": "node server.js"
   },
   "keywords": ["discord", "bot", "game", "cards"],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^14.24.2"
+    "discord.js": "^14.24.2",
+    "express": "^4.18.2"
   }
 }
+

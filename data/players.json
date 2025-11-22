@@ -1,6 +1,6 @@
 {
   "336930168453201920": {
-    "money": 29970,
+    "money": 25366495,
     "inventory": {
       "2Meow": {
         "baseName": "2Meow",
@@ -13,9 +13,10 @@
     "attack": [],
     "defend": [],
     "locked": [],
-    "damageLevel": 1,
+    "damageLevel": 2,
     "activeShield": null,
     "stoneProgress": 0,
-    "activeMining": null
+    "activeMining": null,
+    "upgradeCount": 1
   }
 }
